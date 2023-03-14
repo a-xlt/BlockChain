@@ -217,6 +217,6 @@ else:
             NewBlockChain.append(newblock)
 
         var = read_blockchain_data(NewBlockChain)
-        print(var['medical_history'])
+        print(var)
     else:
         print(rows)
