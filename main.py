@@ -69,7 +69,7 @@ class Block:
 
     def hash_block(self):
         sha = hasher.sha256()
-        sha.update(repr(self).encode('ascii'))
+        sha.update(repr(self).encode('utf-8'))
         return sha.hexdigest()
 
 
@@ -152,8 +152,9 @@ def read_blockchain_data(in_blockchain):
 
 
 def data_reconstruct(rawdata):
-    return dict(name=str(rawdata[1]), age=str(rawdata[2]), address=str(rawdata[3]), phone_number=str(rawdata[4]), insurance=str(rawdata[5]),
-                medical_history=str(rawdata[6]))
+    return dict(name=str(rawdata[1]), age=str(rawdata[2]), address=str(rawdata[3]), phone_number=str(rawdata[4]),
+                insurance=str(rawdata[5]),medical_history=str(rawdata[6]))
+
 
 
 def EncryptBlock(plain_block, secret_key):
@@ -216,8 +217,6 @@ else:
             NewBlockChain.append(newblock)
 
         var = read_blockchain_data(NewBlockChain)
-        var2 = var['medical_history'].replace('\\t', '\n')
-        var['medical_history'] = var2
-        print(var)
+        print(var['medical_history'])
     else:
         print(rows)
