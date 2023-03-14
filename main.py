@@ -75,12 +75,12 @@ class Block:
 
 class Information:
     def __init__(self, name, age, address, phone_number, insurance, medical_history):
-        self.name = name
-        self.age = age
-        self.address = address
-        self.phone_number = phone_number
-        self.insurance = insurance
-        self.medical_history = medical_history
+        self.name = str(name)
+        self.age = str(age)
+        self.address = str(address)
+        self.phone_number = str(phone_number)
+        self.insurance = str(insurance)
+        self.medical_history = str(medical_history)
         self.finaldata = FinalData(self)
 
 
@@ -143,7 +143,7 @@ def read_blockchain_data(in_blockchain):
             decryptedData = DecryptBlock(in_blockchain[i].data, in_blockchain[i].previous_hash, in_blockchain[i].iv)
             data_in_block += decryptedData
 
-        split_data = data_in_block.split(' | ')
+        split_data = data_in_block.split('|')
         data_after_reconstruct = data_reconstruct(split_data)
 
         return data_after_reconstruct
@@ -152,8 +152,8 @@ def read_blockchain_data(in_blockchain):
 
 
 def data_reconstruct(rawdata):
-    return dict(name=rawdata[1], age=rawdata[2], address=rawdata[3], phone_number=rawdata[4], insurance=rawdata[5],
-                medical_history=rawdata[6])
+    return dict(name=str(rawdata[1]), age=str(rawdata[2]), address=str(rawdata[3]), phone_number=str(rawdata[4]), insurance=str(rawdata[5]),
+                medical_history=str(rawdata[6]))
 
 
 def EncryptBlock(plain_block, secret_key):
@@ -179,40 +179,45 @@ def DecryptBlock(CipherBlock, secret_key, iv):
     return un_padded_plaintext[2]
 
 
-MainBlockChain = [create_genesis_block()]
-previous_block = MainBlockChain[0]
-NameOfpatient = input("Enter The name Of patient: ")
-AgeOfpatient = input("Enter The Age Of patient: ")
-AddressOfpatient = input("Enter The Address Of patient: ")
-PhoneOfpatient = input("Enter The Phone Number Of patient: ")
-insuranceOfpatient = input("Enter The Insurance Number Of patient: ")
-medicalHistoryOfpatient = input("Enter The Medical History of patient:")
+x = input('1- Add Information | 2- search : ')
+if x == '1':
 
-information_patient = Information(NameOfpatient, AgeOfpatient, AddressOfpatient, PhoneOfpatient, insuranceOfpatient,
-                                  medicalHistoryOfpatient)
+    MainBlockChain = [create_genesis_block()]
+    previous_block = MainBlockChain[0]
+    NameOfpatient = str(input("Enter The name Of patient: "))
+    AgeOfpatient = str(input("Enter The Age Of patient: "))
+    AddressOfpatient = str(input("Enter The Address Of patient: "))
+    PhoneOfpatient = str(input("Enter The Phone Number Of patient: "))
+    insuranceOfpatient = str(input("Enter The Insurance Number Of patient: "))
+    medicalHistoryOfpatient = str(input("Enter The Medical History of patient:"))
 
-for block in information_patient.finaldata:
-    new_block = next_block(previous_block, block)
-    MainBlockChain.append(new_block)
-    previous_block = new_block
+    information_patient = Information(NameOfpatient, AgeOfpatient, AddressOfpatient, PhoneOfpatient, insuranceOfpatient,
+                                      medicalHistoryOfpatient)
 
-central_Database(MainBlockChain, NameOfpatient)
+    for block in information_patient.finaldata:
+        new_block = next_block(previous_block, block)
+        MainBlockChain.append(new_block)
+        previous_block = new_block
 
-#check our work :
+    central_Database(MainBlockChain, NameOfpatient)
 
-serach_name =input("Enter The Name Of Patient: ")
-rows = retrieve_data(serach_name)
 
-if rows != 'Nothing found!':
-    NewBlockChain = []
-    for row in rows:
-        newblock = Block(row[0], row[1], row[2], row[3], row[4])
-        newblock.hash = row[5]
-        NewBlockChain.append(newblock)
-
-    var = read_blockchain_data(NewBlockChain)
-    var2 = var['medical_history'].replace('\\t', '\n')
-    var['medical_history'] = var2
-    print(var['medical_history'])
+# check our work :
 else:
-    print(rows)
+
+    serach_name = input("Enter The Name Of Patient: ")
+    rows = retrieve_data(serach_name)
+
+    if rows != 'Nothing found!':
+        NewBlockChain = []
+        for row in rows:
+            newblock = Block(row[0], row[1], row[2], row[3], row[4])
+            newblock.hash = row[5]
+            NewBlockChain.append(newblock)
+
+        var = read_blockchain_data(NewBlockChain)
+        var2 = var['medical_history'].replace('\\t', '\n')
+        var['medical_history'] = var2
+        print(var)
+    else:
+        print(rows)
