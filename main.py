@@ -6,16 +6,18 @@ import uuid
 import sqlite3
 
 
-def central_Database(In_BlockChain, name_of_patient):
+def central_Database(In_BlockChain, ID_of_patient):
     name_of_database = str(uuid.uuid4())
     con = sqlite3.connect("DataCenter.db")
     cursor = con.cursor()
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS NamesOfDatabases (id INTEGER PRIMARY KEY AUTOINCREMENT, 'name' TEXT,'uuid' TEXT)")
-    cursor.execute("SELECT EXISTS(SELECT * FROM NamesOfDatabases  WHERE name = ?)", (name_of_patient,))
+        "CREATE TABLE IF NOT EXISTS NamesOfDatabases (id INTEGER PRIMARY KEY AUTOINCREMENT, 'Identifier' TEXT,"
+        "'uuid' TEXT)")
+    cursor.execute("SELECT EXISTS(SELECT * FROM NamesOfDatabases  WHERE 'Identifier' = ?)", (ID_of_patient,))
     result = cursor.fetchone()
     if result[0] == 0:
-        cursor.execute("INSERT INTO NamesOfDatabases('name','uuid') VALUES (?,?)", (name_of_patient, name_of_database))
+        cursor.execute("INSERT INTO NamesOfDatabases('Identifier','uuid') VALUES (?,?)",
+                       (ID_of_patient, name_of_database))
         con.commit()
         con.close()
         SaveToSQL(In_BlockChain, name_of_database)
@@ -36,12 +38,12 @@ def SaveToSQL(In_BlockChain, database_name):
     con.close()
 
 
-def retrieve_data(patient_name):
+def retrieve_data(patient_ID):
     con = sqlite3.connect("DataCenter.db")
     cursor = con.cursor()
-    cursor.execute("SELECT EXISTS(SELECT uuid FROM NamesOfDatabases where name = '" + patient_name + "')")
+    cursor.execute("SELECT EXISTS(SELECT uuid FROM NamesOfDatabases where Identifier = '" + patient_ID + "')")
     if cursor.fetchone()[0]:
-        cursor.execute("SELECT uuid FROM NamesOfDatabases where name = '" + patient_name + "'")
+        cursor.execute("SELECT uuid FROM NamesOfDatabases where Identifier = '" + patient_ID + "'")
         patient_uuid = cursor.fetchone()[0] + ".db"
         con = sqlite3.connect(patient_uuid)
         cursor = con.cursor()
@@ -69,25 +71,25 @@ class Block:
 
     def hash_block(self):
         sha = hasher.sha256()
-        sha.update(repr(self).encode('ascii'))
+        sha.update(repr(self).encode('UTF-8'))
         return sha.hexdigest()
 
 
 class Information:
-    def __init__(self, name, age, address, phone_number, insurance, medical_history):
-        self.name = name
-        self.age = age
-        self.address = address
-        self.phone_number = phone_number
-        self.insurance = insurance
-        self.medical_history = medical_history
+    def __init__(self, ID, age, address, phone_number, insurance, medical_history):
+        self.ID = str(ID)
+        self.age = str(age)
+        self.address = str(address)
+        self.phone_number = str(phone_number)
+        self.insurance = str(insurance)
+        self.medical_history = str(medical_history)
         self.finaldata = FinalData(self)
 
 
 def FinalData(obj):
-    rawdata = ' | ' + obj.name + ' | ' + obj.age + ' | ' + obj.address + ' | ' + obj.phone_number + ' | ' \
-              + obj.insurance + ' | ' + obj.medical_history
-    rawdataBlocks = Blocks_With_Data(str(rawdata))
+    rawdata = ' |  ' + obj.ID + ' |  ' + obj.age + ' |  ' + obj.address + ' |  ' + obj.phone_number + ' |  ' \
+              + obj.insurance + ' |  ' + obj.medical_history
+    rawdataBlocks = Blocks_With_Data(rawdata)
     return rawdataBlocks
 
 
@@ -117,6 +119,7 @@ def next_block(last_block, info):
     new_timestamp = date.datetime.now()
     new_data, new_iv = EncryptBlock(info, last_block.hash)
     previous_hash = last_block.hash
+    print(new_data)
     return Block(new_index, new_timestamp, new_data, new_iv, previous_hash)
 
 
@@ -141,7 +144,7 @@ def read_blockchain_data(in_blockchain):
         data_in_block = ''
         for i in range(1, len(in_blockchain)):
             decryptedData = DecryptBlock(in_blockchain[i].data, in_blockchain[i].previous_hash, in_blockchain[i].iv)
-            data_in_block += decryptedData
+            data_in_block += decryptedData[2:len(decryptedData) - 1]
 
         split_data = data_in_block.split(' | ')
         data_after_reconstruct = data_reconstruct(split_data)
@@ -152,8 +155,8 @@ def read_blockchain_data(in_blockchain):
 
 
 def data_reconstruct(rawdata):
-    return dict(name=rawdata[1], age=rawdata[2], address=rawdata[3], phone_number=rawdata[4], insurance=rawdata[5],
-                medical_history=rawdata[6])
+    return dict(ID=rawdata[1], age=rawdata[2], address=rawdata[3], phone_number=rawdata[4],
+                insurance=rawdata[5], medical_history=rawdata[6])
 
 
 def EncryptBlock(plain_block, secret_key):
@@ -161,7 +164,7 @@ def EncryptBlock(plain_block, secret_key):
     num_bytes = bytes.fromhex(hex_string[2:])
     key = num_bytes
     plaintext_bytes = plain_block.encode()
-    padded_plaintext = pad(plaintext_bytes, AES.block_size)
+    padded_plaintext = pad(bytes(plaintext_bytes), AES.block_size)
     cipher = AES.new(key, AES.MODE_CBC)
     cipher_text = cipher.encrypt(padded_plaintext)
     iv = cipher.iv
@@ -175,44 +178,44 @@ def DecryptBlock(CipherBlock, secret_key, iv):
     key = num_bytes
     decrypt_cipher = AES.new(key, AES.MODE_CBC, iv)
     plain_text = decrypt_cipher.decrypt(CipherBlock)
-    un_padded_plaintext = repr(unpad(plain_text, AES.block_size))
-    return un_padded_plaintext[2]
+    un_padded_plaintext = str(unpad(plain_text, AES.block_size))
+    return un_padded_plaintext
 
 
-MainBlockChain = [create_genesis_block()]
-previous_block = MainBlockChain[0]
-NameOfpatient = input("Enter The name Of patient: ")
-AgeOfpatient = input("Enter The Age Of patient: ")
-AddressOfpatient = input("Enter The Address Of patient: ")
-PhoneOfpatient = input("Enter The Phone Number Of patient: ")
-insuranceOfpatient = input("Enter The Insurance Number Of patient: ")
-medicalHistoryOfpatient = input("Enter The Medical History of patient:")
+def EnterInfo(pid, age, address, phone, insurance, medical):
+    MainBlockChain = [create_genesis_block()]
+    previous_block = MainBlockChain[0]
+    IDOfpatient = str(pid)
+    AgeOfpatient = str(age)
+    AddressOfpatient = str(address)
+    PhoneOfpatient = str(phone)
+    insuranceOfpatient = str(insurance)
+    medicalHistoryOfpatient = str(medical)
 
-information_patient = Information(NameOfpatient, AgeOfpatient, AddressOfpatient, PhoneOfpatient, insuranceOfpatient,
-                                  medicalHistoryOfpatient)
+    information_patient = Information(IDOfpatient, AgeOfpatient, AddressOfpatient, PhoneOfpatient,
+                                      insuranceOfpatient,
+                                      medicalHistoryOfpatient)
 
-for block in information_patient.finaldata:
-    new_block = next_block(previous_block, block)
-    MainBlockChain.append(new_block)
-    previous_block = new_block
+    for block in information_patient.finaldata:
+        new_block = next_block(previous_block, block)
+        MainBlockChain.append(new_block)
+        previous_block = new_block
 
-central_Database(MainBlockChain, NameOfpatient)
+    central_Database(MainBlockChain, IDOfpatient)
+    return 'Information Added successfully'
 
-#check our work :
 
-serach_name =input("Enter The Name Of Patient: ")
-rows = retrieve_data(serach_name)
+def SearchInfo(search_ID):
+    rows = retrieve_data(search_ID)
 
-if rows != 'Nothing found!':
-    NewBlockChain = []
-    for row in rows:
-        newblock = Block(row[0], row[1], row[2], row[3], row[4])
-        newblock.hash = row[5]
-        NewBlockChain.append(newblock)
+    if rows != 'Nothing found!':
+        NewBlockChain = []
+        for row in rows:
+            newblock = Block(row[0], row[1], row[2], row[3], row[4])
+            newblock.hash = row[5]
+            NewBlockChain.append(newblock)
+        var = read_blockchain_data(NewBlockChain)
+        return var
 
-    var = read_blockchain_data(NewBlockChain)
-    var2 = var['medical_history'].replace('\\t', '\n')
-    var['medical_history'] = var2
-    print(var['medical_history'])
-else:
-    print(rows)
+    else:
+        return rows
