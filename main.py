@@ -72,6 +72,7 @@ class Block:
     def hash_block(self):
         sha = hasher.sha256()
         sha.update(repr(self).encode('UTF-8'))
+        print("SHA256 HASH(", self.index, "):", sha.hexdigest())
         return sha.hexdigest()
 
 
@@ -148,7 +149,6 @@ def read_blockchain_data(in_blockchain):
 
         split_data = data_in_block.split(' | ')
         data_after_reconstruct = data_reconstruct(split_data)
-
         return data_after_reconstruct
     else:
         print('Data Is Not Valid..')
@@ -168,7 +168,6 @@ def EncryptBlock(plain_block, secret_key):
     cipher = AES.new(key, AES.MODE_CBC)
     cipher_text = cipher.encrypt(padded_plaintext)
     iv = cipher.iv
-    print(cipher_text)
     return cipher_text, iv
 
 
